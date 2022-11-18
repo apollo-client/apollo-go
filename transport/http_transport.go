@@ -53,6 +53,8 @@ func (h *HTTPTransport) Do(reqURL string, opts ...CallOption) error {
 			time.Sleep(2 * time.Second)
 			continue
 		}
+		// break for no error
+		break
 	}
 	if retry > retries {
 		return errors.New("over max retry still error")
@@ -88,12 +90,13 @@ func (h *HTTPTransport) do(reqURL string, opt *CallOptions) error {
 		if opt.Success != nil {
 			return opt.Success(body)
 		}
+		return nil
 	case http.StatusNotModified:
 		if opt.NotModified != nil {
 			return opt.NotModified(body)
 		}
+		return nil
 	default:
 		return errors.New("status error")
 	}
-	return nil
 }

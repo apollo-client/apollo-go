@@ -4,6 +4,7 @@ import "testing"
 
 var (
 	htrans = NewHTTPTransport()
+	host   = "http://81.68.181.139:8080"
 )
 
 func TestTransport(t *testing.T) {
@@ -14,6 +15,6 @@ func TestTransport(t *testing.T) {
 	opts := []CallOption{
 		WithSuccess(sucess),
 	}
-	err := htrans.Do("https://ww.google.com", opts...)
+	err := htrans.Do("https://www.google.com", opts...)
 	t.Log(err)
 }

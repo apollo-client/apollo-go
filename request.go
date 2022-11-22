@@ -2,48 +2,16 @@ package apollo
 
 import (
 	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
-	"time"
 )
 
-type RequestOptions struct {
-	Timeout     time.Duration
-	Success     SuccessCallback
-	NotModified NotModifiedCallback
-}
+var (
+	httpClient = &http.Client{}
+)
 
-type SuccessCallback func(body []byte) error
-type NotModifiedCallback func(body []byte) error
-
-func newRequestOptions(opt ...RequestOption) RequestOptions {
-	opts := RequestOptions{}
-	for _, o := range opt {
-		o(&opts)
-	}
-	return opts
-}
-
-func Timeout(t time.Duration) RequestOption {
-	return func(o *RequestOptions) { o.Timeout = t }
-}
-func Success(fn SuccessCallback) RequestOption {
-	return func(o *RequestOptions) { o.Success = fn }
-}
-func NotModified(fn NotModifiedCallback) RequestOption {
-	return func(o *RequestOptions) { o.NotModified = fn }
-}
-
-type RequestOption func(o *RequestOptions)
-
-func Request(reqURL string, opts ...RequestOption) error {
-	opt := newRequestOptions(opts...)
-	c := &http.Client{}
-	if opt.Timeout != 0 {
-		c.Timeout = opt.Timeout
-	} else {
-		c.Timeout = 1 * time.Second
-	}
+func Request(reqURL string) (int, []byte, error) {
 	retry := 0
 
 	for {
@@ -51,47 +19,37 @@ func Request(reqURL string, opts ...RequestOption) error {
 		if retry > 5 {
 			break
 		}
-		if err := doRequest(c, reqURL, &opt); err != nil {
+		status, body, err := doRequest(httpClient, reqURL)
+		if err != nil {
 			continue
-		} else {
-			return nil
 		}
-
+		if status != http.StatusOK && status != http.StatusNotModified {
+			continue
+		}
+		return status, body, err
 	}
+	var err error
 	if retry > 5 {
-		return errors.New("over max retry still error")
+		err = errors.New("over max retry still error")
 	}
-	return nil
+	return 0, nil, err
 }
 
-func doRequest(c *http.Client, reqURL string, opts *RequestOptions) error {
+func doRequest(c *http.Client, reqURL string) (int, []byte, error) {
 	resp, err := c.Get(reqURL)
 	if err != nil {
-		return err
+		return 0, nil, err
 	}
 	if resp == nil {
-		return errors.New("resp nil")
+		return 0, nil, errors.New("resp nil")
 	}
 	if resp.Body != nil {
 		defer func() { _ = resp.Body.Close() }()
 	}
 	var body []byte
 	body, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
+	if err == io.EOF {
+		err = nil
 	}
-	switch resp.StatusCode {
-	case http.StatusOK:
-		if opts.Success != nil {
-			return opts.Success(body)
-		}
-		return nil
-	case http.StatusNotModified:
-		if opts.NotModified != nil {
-			return opts.NotModified(body)
-		}
-		return nil
-	default:
-		return errors.New("error response")
-	}
+	return resp.StatusCode, body, err
 }

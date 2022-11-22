@@ -3,59 +3,42 @@ package apollo
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 )
 
 type Apollo struct {
-	AppId          string                 `json:"appId"`
-	Cluster        string                 `json:"cluster"`
-	NamespaceName  string                 `json:"namespaceName"`
-	Configurations map[string]interface{} `json:"configurations"`
-	ReleaseKey     string                 `json:"releaseKey"`
+	AppId         string `json:"appId"`
+	Cluster       string `json:"cluster"`
+	NamespaceName string `json:"namespaceName"`
+	ReleaseKey    string `json:"releaseKey"`
+
+	Configurations map[string]json.RawMessage `json:"configurations"`
 }
 
-type Notification struct {
-	NotificationId int64  `json:"notificationId"`
-	NamespaceName  string `json:"namespaceName"`
-}
-
-func ConfigsURL(conf *Config, releaseKey string) string {
+func ConfigsURL(app *Application, namespace string, releaseKey string) string {
 	return fmt.Sprintf("http://%s/configs/%s/%s/%s?releaseKey=%s&ip=%s",
-		conf.Addr,
-		url.QueryEscape(conf.AppId),
-		url.QueryEscape(conf.Cluster),
-		url.QueryEscape(conf.NamespaceName),
+		app.Addr,
+		url.QueryEscape(app.AppId),
+		url.QueryEscape(app.Cluster),
+		url.QueryEscape(namespace),
 		url.QueryEscape(releaseKey),
 		GetLocalAddr())
 }
 
-func NotifyURL(conf *Config, ns []*Notification) string {
-	bs, _ := json.Marshal(ns)
-	return fmt.Sprintf("http://%s/notifications/v2?appId=%s&cluster=%s&notifications=%s",
-		conf.Addr,
-		url.QueryEscape(conf.AppId),
-		url.QueryEscape(conf.Cluster),
-		url.QueryEscape(string(bs)))
-}
-
-func ServicesURL(conf *Config) string {
-	return fmt.Sprintf("%sservices/config?appId=%s&ip=%s",
-		conf.Addr,
-		url.QueryEscape(conf.AppId),
-		GetLocalAddr())
-}
-
-func GetServices(conf *Config, opts ...RequestOption) error {
-	reqURL := ServicesURL(conf)
-	return Request(reqURL, opts...)
-}
-
-func GetNotify(conf *Config, ns []*Notification, opts ...RequestOption) error {
-	reqURL := NotifyURL(conf, ns)
-	return Request(reqURL, opts...)
-}
-
-func GetConfigs(conf *Config, releaseKey string, opts ...RequestOption) error {
-	reqURL := ConfigsURL(conf, releaseKey)
-	return Request(reqURL, opts...)
+func GetConfigs(app *Application, namespace string, releaseKey string) (status int, apol *Apollo, err error) {
+	reqURL := ConfigsURL(app, namespace, releaseKey)
+	var body []byte
+	status, body, err = Request(reqURL)
+	if err != nil {
+		return
+	}
+	if status != http.StatusOK {
+		return
+	}
+	err = json.Unmarshal(body, apol)
+	if err != nil {
+		return
+	}
+	return
 }

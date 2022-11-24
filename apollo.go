@@ -81,43 +81,35 @@ func namespaceCallback(deft interface{}, ptr *unsafe.Pointer) (WatchCallback, er
 		for num := 0; num < nt.NumField(); num++ {
 			key := nt.Field(num).Tag.Get("json")
 			typ := nt.Field(num).Type.Kind()
+			// json.RawMessage to string
+			var str string
+			_ = json.Unmarshal(tmp[key], &str)
+
 			switch typ {
-			case reflect.Struct, reflect.Map, reflect.Array, reflect.Slice:
-				var str string
-				_ = json.Unmarshal(tmp[key], &str)
-				var val reflect.Value
-				if typ == reflect.Struct {
-					val = reflect.New(nt.Field(num).Type)
-				}
-				// map and slice not available, do not know why
-				if typ == reflect.Map {
-					val = reflect.MakeMap(nt.Field(num).Type)
-				}
-				if typ == reflect.Array || typ == reflect.Slice {
-					val = reflect.MakeSlice(nt.Field(num).Type, 0, 10)
-				}
+			case reflect.Struct:
+				val := reflect.New(nt.Field(num).Type)
 				vpt := val.Interface()
 				_ = jsoniter.Unmarshal([]byte(str), &vpt)
 				nm[key] = val.Interface()
+			case reflect.Array, reflect.Slice:
+				var val []interface{}
+				_ = json.Unmarshal([]byte(str), &val)
+				nm[key] = val
+			case reflect.Map:
+				val := make(map[string]interface{})
+				_ = json.Unmarshal([]byte(str), &val)
+				nm[key] = val
 			case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int8, reflect.Int64,
 				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				var str string
-				_ = json.Unmarshal(tmp[key], &str)
 				val, _ := strconv.ParseInt(str, 10, 64)
 				nm[key] = val
 			case reflect.Float32, reflect.Float64:
-				var str string
-				_ = json.Unmarshal(tmp[key], &str)
 				val, _ := strconv.ParseFloat(str, 64)
 				nm[key] = val
 			case reflect.Bool:
-				var str string
-				_ = json.Unmarshal(tmp[key], &str)
 				val, _ := strconv.ParseBool(str)
 				nm[key] = val
 			default:
-				var str string
-				_ = json.Unmarshal(tmp[key], &str)
 				nm[key] = string(str)
 			}
 		}

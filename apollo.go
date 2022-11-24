@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 	"time"
 	"unsafe"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 type Application struct {
@@ -80,21 +82,43 @@ func namespaceCallback(deft interface{}, ptr *unsafe.Pointer) (WatchCallback, er
 			key := nt.Field(num).Tag.Get("json")
 			typ := nt.Field(num).Type.Kind()
 			switch typ {
-			case reflect.Array, reflect.Struct:
-				val := reflect.New(nt.Field(num).Type)
-				_ = json.Unmarshal(tmp[key], val.Interface())
-				nm[key] = val
-			case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int8, reflect.Int64:
-				val, _ := strconv.ParseInt(string(tmp[key]), 10, 64)
+			case reflect.Struct, reflect.Map, reflect.Array, reflect.Slice:
+				var str string
+				_ = json.Unmarshal(tmp[key], &str)
+				var val reflect.Value
+				if typ == reflect.Struct {
+					val = reflect.New(nt.Field(num).Type)
+				}
+				// map and slice not available, do not know why
+				if typ == reflect.Map {
+					val = reflect.MakeMap(nt.Field(num).Type)
+				}
+				if typ == reflect.Array || typ == reflect.Slice {
+					val = reflect.MakeSlice(nt.Field(num).Type, 0, 10)
+				}
+				vpt := val.Interface()
+				_ = jsoniter.Unmarshal([]byte(str), &vpt)
+				nm[key] = val.Interface()
+			case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int8, reflect.Int64,
+				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				var str string
+				_ = json.Unmarshal(tmp[key], &str)
+				val, _ := strconv.ParseInt(str, 10, 64)
 				nm[key] = val
 			case reflect.Float32, reflect.Float64:
-				val, _ := strconv.ParseFloat(string(tmp[key]), 64)
+				var str string
+				_ = json.Unmarshal(tmp[key], &str)
+				val, _ := strconv.ParseFloat(str, 64)
 				nm[key] = val
 			case reflect.Bool:
-				val, _ := strconv.ParseBool(string(tmp[key]))
+				var str string
+				_ = json.Unmarshal(tmp[key], &str)
+				val, _ := strconv.ParseBool(str)
 				nm[key] = val
 			default:
-				nm[key] = string(tmp[key])
+				var str string
+				_ = json.Unmarshal(tmp[key], &str)
+				nm[key] = string(str)
 			}
 		}
 		// marshal and unmarshal
@@ -114,10 +138,10 @@ type WatchCallback func(ctx context.Context, apol *Apollo) error
 // WatchNamespace watch namespace and callback
 func WatchNamespace(namespace string, cb WatchCallback) error {
 	status, apol, err := GetConfigs(app, namespace, "")
-	if err != nil || apol == nil || status != http.StatusOK {
+	if err != nil || status != http.StatusOK {
 		return fmt.Errorf("watch namespace:%s, err:%v", namespace, err)
 	}
-	if err = safeCallback(apol, cb); err != nil {
+	if err = safeCallback(&apol, cb); err != nil {
 		return fmt.Errorf("watch namespace:%s, err:%v", namespace, err)
 	}
 
@@ -125,11 +149,11 @@ func WatchNamespace(namespace string, cb WatchCallback) error {
 		ticker := time.NewTicker(5 * time.Second)
 		for range ticker.C {
 			ns, na, ne := GetConfigs(app, namespace, apol.ReleaseKey)
-			if ne != nil || na == nil || ns != http.StatusOK {
+			if ne != nil || ns != http.StatusOK {
 				continue
 			}
 			apol = na
-			_ = safeCallback(apol, cb)
+			_ = safeCallback(&apol, cb)
 		}
 	}()
 	return nil

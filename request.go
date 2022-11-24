@@ -11,7 +11,33 @@ var (
 	httpClient = &http.Client{}
 )
 
-func Request(reqURL string) (int, []byte, error) {
+type Option func(o *Options)
+
+type Options struct {
+	Headers map[string]string
+}
+
+func newOptions(opts ...Option) Options {
+	opt := Options{}
+	for _, o := range opts {
+		o(&opt)
+	}
+	return opt
+}
+
+func Headers(m map[string]string) Option {
+	return func(o *Options) {
+		if o.Headers == nil {
+			o.Headers = make(map[string]string)
+		}
+		for k, v := range m {
+			o.Headers[k] = v
+		}
+	}
+}
+
+func Request(reqURL string, opts ...Option) (int, []byte, error) {
+	opt := newOptions(opts...)
 	retry := 0
 
 	for {
@@ -19,7 +45,7 @@ func Request(reqURL string) (int, []byte, error) {
 		if retry > 5 {
 			break
 		}
-		status, body, err := doRequest(httpClient, reqURL)
+		status, body, err := doRequest(httpClient, reqURL, &opt)
 		if err != nil {
 			continue
 		}
@@ -35,8 +61,17 @@ func Request(reqURL string) (int, []byte, error) {
 	return 0, nil, err
 }
 
-func doRequest(c *http.Client, reqURL string) (int, []byte, error) {
-	resp, err := c.Get(reqURL)
+func doRequest(c *http.Client, reqURL string, opt *Options) (int, []byte, error) {
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	if err != nil {
+		return 0, nil, err
+	}
+	if len(opt.Headers) > 0 {
+		for k, v := range opt.Headers {
+			req.Header.Set(k, v)
+		}
+	}
+	resp, err := c.Do(req)
 	if err != nil {
 		return 0, nil, err
 	}

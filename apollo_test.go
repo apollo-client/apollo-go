@@ -15,6 +15,15 @@ type TestConfig struct {
 	String  string            `json:"string"`
 	Int     int64             `json:"int"`
 	Float   float32           `json:"float"`
+	Age     int64             `json:"age"`
+	Ages    []int64           `json:"ages"`
+}
+
+type CommonConfig struct {
+	Name    string   `json:"name"`
+	Age     int64    `json:"age"`
+	Friends []string `json:"friends"`
+	Wants   []int32  `json:"wants"`
 }
 
 type Person struct {
@@ -33,7 +42,11 @@ var (
 	mDeft = &TestConfig{
 		Float: 0.12,
 		Ints:  []int32{2, 3},
+		Age:   100,
+		Ages:  []int64{1, 2, 3},
 	}
+	mComDeft = &CommonConfig{}
+	mComPtr  unsafe.Pointer
 )
 
 func DC() *TestConfig {
@@ -44,13 +57,25 @@ func DC() *TestConfig {
 	return mDeft
 }
 
+func DCom() *CommonConfig {
+	p := atomic.LoadPointer(&mComPtr)
+	if p != nil {
+		return (*CommonConfig)(p)
+	}
+	return mComDeft
+}
+
 func TestWatch(t *testing.T) {
 	Init(apolloApp)
 	err := Watch("application", mDeft, &mPtr)
 	t.Log(err)
 	t.Log(mDeft)
-	for i := 0; i < 1; i++ {
-		t.Log(DC())
-		time.Sleep(3 * time.Second)
+	err = Watch("app-common", mComDeft, &mComPtr)
+	t.Log(err)
+	t.Log(mComDeft)
+	for i := 0; i < 10; i++ {
+		t.Log(DC().Ages)
+		t.Log(DCom().Wants)
+		time.Sleep(1 * time.Second)
 	}
 }

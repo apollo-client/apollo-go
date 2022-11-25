@@ -61,16 +61,18 @@ func namespaceCallback(deft interface{}, ptr *unsafe.Pointer) (WatchCallback, er
 		return nil, err
 	}
 
-	return func(ctx context.Context, apol *Apollo) (err error) {
+	return func(_ context.Context, apol *Apollo) (err error) {
 		// apol or apol configurations nil, return
 		if apol == nil || apol.Configurations == nil {
 			return
 		}
 		// fill in default value
 		tmp := apol.Configurations
+		def := make(map[string]bool)
 		for k, v := range mdeft {
 			if _, ok := tmp[k]; !ok {
 				tmp[k] = v
+				def[k] = true
 			}
 		}
 
@@ -83,8 +85,11 @@ func namespaceCallback(deft interface{}, ptr *unsafe.Pointer) (WatchCallback, er
 			typ := nt.Field(num).Type.Kind()
 			// json.RawMessage to string
 			var str string
-			_ = json.Unmarshal(tmp[key], &str)
-
+			if _, ok := def[key]; ok {
+				str = string(tmp[key])
+			} else {
+				_ = json.Unmarshal(tmp[key], &str)
+			}
 			switch typ {
 			case reflect.Struct:
 				val := reflect.New(nt.Field(num).Type)

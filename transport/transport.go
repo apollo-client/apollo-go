@@ -2,6 +2,7 @@ package transport
 
 type Option func(o *Options)
 
+// Transport request transport
 type Transport interface {
 	Init(opt ...Option) error
 	Options() *Options

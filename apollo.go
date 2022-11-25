@@ -22,8 +22,8 @@ type Application struct {
 
 // Client apollo client
 type Client struct {
-	App  *Application
-	opts *Options
+	App  *Application // application config
+	opts *Options     // options
 }
 
 // NewClient new apollo client
@@ -146,7 +146,7 @@ func (c *Client) watchNamespace(namespace string, cb WatchCallback) error {
 	}
 
 	go func() {
-		ticker := time.NewTicker(5 * time.Second)
+		ticker := time.NewTicker(c.opts.WatchInterval)
 		for range ticker.C {
 			ns, na, ne := c.getConfigs(namespace, apol.ReleaseKey)
 			if ne != nil || ns != http.StatusOK {

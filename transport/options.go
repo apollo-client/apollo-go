@@ -7,16 +7,17 @@ import (
 	"time"
 )
 
+// HookRequest hook request before http request function
 type HookRequest func(req *http.Request) error
 
 type Options struct {
-	Headers       map[string]string
-	Client        *http.Client
-	MaxRetries    int
-	Timeout       time.Duration
-	RetryInterval time.Duration
-	Trans         *http.Transport
-	Hook          HookRequest
+	Headers       map[string]string // http request header
+	Client        *http.Client      // http client
+	MaxRetries    int               // max retry if error
+	Timeout       time.Duration     // http connect timeout
+	RetryInterval time.Duration     // retry interval if error
+	Trans         *http.Transport   // http transport
+	Hook          HookRequest       // hook before http request
 }
 
 var (
@@ -51,6 +52,7 @@ func initOptions(opt *Options, opts ...Option) {
 	}
 }
 
+// Headers http header, if there are more than two keys, use the newest one
 func Headers(m map[string]string) Option {
 	return func(o *Options) {
 		if o.Headers == nil {
@@ -62,22 +64,27 @@ func Headers(m map[string]string) Option {
 	}
 }
 
+// Client custom http client
 func Client(c *http.Client) Option {
 	return func(o *Options) { o.Client = c }
 }
 
+// MaxRetries max retry times
 func MaxRetries(r int) Option {
 	return func(o *Options) { o.MaxRetries = r }
 }
 
+// Timeout connect timeout
 func Timeout(t time.Duration) Option {
 	return func(o *Options) { o.Timeout = t }
 }
 
+// RetryInterval retry interval if error
 func RetryInterval(t time.Duration) Option {
 	return func(o *Options) { o.RetryInterval = t }
 }
 
+// Trans http transport
 func Trans(t *http.Transport) Option {
 	return func(o *Options) { o.Trans = t }
 }

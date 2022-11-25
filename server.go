@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+
+	"github.com/xnzone/apollo-go/transport"
+	"github.com/xnzone/apollo-go/util"
 )
 
 type Apollo struct {
@@ -16,25 +19,24 @@ type Apollo struct {
 	Configurations map[string]json.RawMessage `json:"configurations"`
 }
 
-func ConfigsURL(app *Application, namespace string, releaseKey string) string {
+func configsURL(app *Application, namespace string, releaseKey string) string {
 	return fmt.Sprintf("%s/configs/%s/%s/%s?releaseKey=%s&ip=%s",
 		app.Addr,
 		url.QueryEscape(app.AppId),
 		url.QueryEscape(app.Cluster),
 		url.QueryEscape(namespace),
 		url.QueryEscape(releaseKey),
-		GetLocalAddr(),
+		util.GetLocalAddr(),
 	)
 }
 
-func GetConfigs(app *Application, namespace string, releaseKey string) (int, Apollo, error) {
+func (c *Client) getConfigs(namespace string, releaseKey string) (int, Apollo, error) {
 	var apol Apollo
-	reqURL := ConfigsURL(app, namespace, releaseKey)
-	opts := []Option{
-		Headers(GetAuth(reqURL, app.AppId, app.Secret)),
-	}
+	app := c.App
+	reqURL := configsURL(app, namespace, releaseKey)
+	header := transport.Headers(c.opts.Auth.Header(reqURL, app.AppId, app.Secret))
 	var body []byte
-	status, body, err := Request(reqURL, opts...)
+	status, body, err := c.opts.Transport.Do(reqURL, header)
 	if err != nil {
 		return status, apol, err
 	}

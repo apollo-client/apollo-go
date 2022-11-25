@@ -1,4 +1,4 @@
-package apollo
+package util
 
 import (
 	"net"
@@ -19,11 +19,13 @@ func GetLocalAddr() string {
 		}
 		for _, a := range addrs {
 			ipnet, ok := a.(*net.IPNet)
-			if ok && !ipnet.IP.IsLoopback() {
-				ipv4 := ipnet.IP.To4()
-				if ipv4 != nil {
-					localAddr = ipv4.String()
-				}
+			if !ok || ipnet.IP.IsLoopback() {
+				continue
+			}
+
+			ipv4 := ipnet.IP.To4()
+			if ipv4 != nil {
+				localAddr = ipv4.String()
 			}
 		}
 	})

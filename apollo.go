@@ -11,8 +11,6 @@ import (
 	"sync/atomic"
 	"time"
 	"unsafe"
-
-	jsoniter "github.com/json-iterator/go"
 )
 
 type Application struct {
@@ -22,26 +20,31 @@ type Application struct {
 	Addr    string `json:"addr"`
 }
 
-var (
-	app *Application
-)
+// Client apollo client
+type Client struct {
+	App  *Application
+	opts *Options
+}
 
-// Init init application config
-func Init(c *Application) error {
+// NewClient new apollo client
+func NewClient(c *Application, opt ...Option) (*Client, error) {
 	if c == nil {
-		return errors.New("config nil")
+		return nil, errors.New("config nil")
 	}
-	app = c
-	return nil
+	opts := newOptions(opt...)
+	return &Client{
+		App:  c,
+		opts: opts,
+	}, nil
 }
 
 // Watch watch namespace struct
-func Watch(namespace string, deft interface{}, ptr *unsafe.Pointer) error {
+func (c *Client) Watch(namespace string, deft interface{}, ptr *unsafe.Pointer) error {
 	cb, err := namespaceCallback(deft, ptr)
 	if err != nil {
 		return err
 	}
-	return WatchNamespace(namespace, cb)
+	return c.watchNamespace(namespace, cb)
 }
 
 // namespaceCallback namespace callback function
@@ -94,7 +97,7 @@ func namespaceCallback(deft interface{}, ptr *unsafe.Pointer) (WatchCallback, er
 			case reflect.Struct:
 				val := reflect.New(nt.Field(num).Type)
 				vpt := val.Interface()
-				_ = jsoniter.Unmarshal([]byte(str), &vpt)
+				_ = json.Unmarshal([]byte(str), &vpt)
 				nm[key] = val.Interface()
 			case reflect.Array, reflect.Slice:
 				var val []interface{}
@@ -133,8 +136,8 @@ func namespaceCallback(deft interface{}, ptr *unsafe.Pointer) (WatchCallback, er
 type WatchCallback func(ctx context.Context, apol *Apollo) error
 
 // WatchNamespace watch namespace and callback
-func WatchNamespace(namespace string, cb WatchCallback) error {
-	status, apol, err := GetConfigs(app, namespace, "")
+func (c *Client) watchNamespace(namespace string, cb WatchCallback) error {
+	status, apol, err := c.getConfigs(namespace, "")
 	if err != nil || status != http.StatusOK {
 		return fmt.Errorf("watch namespace:%s, err:%v", namespace, err)
 	}
@@ -145,7 +148,7 @@ func WatchNamespace(namespace string, cb WatchCallback) error {
 	go func() {
 		ticker := time.NewTicker(5 * time.Second)
 		for range ticker.C {
-			ns, na, ne := GetConfigs(app, namespace, apol.ReleaseKey)
+			ns, na, ne := c.getConfigs(namespace, apol.ReleaseKey)
 			if ne != nil || ns != http.StatusOK {
 				continue
 			}

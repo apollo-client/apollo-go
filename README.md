@@ -9,6 +9,7 @@ apollo config go
 - [x] 动态实时更新通知 通过`Watch`订阅对应的`namespace`变更，当有变更时，保证推送一次给业务
 - [x] 支持默认值 当配置值无法获取时，支持业务配置的默认值
 - [x] 支持灰度发布 自动获取业务本地ip，当apollo配置中心配置了灰度，会获取灰度配置
+- [x] 支持自定义认证和自定义http请求参数
 - [ ] 支持本地文件备份 当配置中心出现问题时，通过备份文件加载
 
 ## 使用
@@ -61,8 +62,8 @@ func DC() *TestConfig {
 }
 
 func main() {
-    apollo.Init(apolloApp)
-	err := apollo.Watch("application", mDeft, &mPtr)
+    c, _ := apollo.NewClient(apolloApp)
+	err := c.Watch("application", mDeft, &mPtr)
     for i := 0; i < 100; i++ {
         fmt.Printf("dconf:%+v", DC())
         time.Sleep(1 * time.Second)

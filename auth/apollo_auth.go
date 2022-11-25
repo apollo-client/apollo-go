@@ -1,4 +1,4 @@
-package apollo
+package auth
 
 import (
 	"crypto/hmac"
@@ -10,7 +10,13 @@ import (
 	"time"
 )
 
-func GetAuth(rawURL string, appId string, secret string) map[string]string {
+type ApolloAuth struct{}
+
+func NewApolloAuth() *ApolloAuth {
+	return &ApolloAuth{}
+}
+
+func (a ApolloAuth) Header(rawURL string, appId string, secret string) map[string]string {
 	ms := time.Now().UnixNano() / int64(time.Millisecond)
 	ts := strconv.FormatInt(ms, 10)
 

@@ -12,6 +12,7 @@ var (
 )
 
 func TestGetConfigs(t *testing.T) {
-	status, body, err := GetConfigs(testApp, "application", "")
+	c, _ := NewClient(testApp)
+	status, body, err := c.getConfigs("application", "")
 	t.Log(status, body, err)
 }

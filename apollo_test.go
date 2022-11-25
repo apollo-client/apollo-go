@@ -66,16 +66,16 @@ func DCom() *CommonConfig {
 }
 
 func TestWatch(t *testing.T) {
-	Init(apolloApp)
-	err := Watch("application", mDeft, &mPtr)
+	c, _ := NewClient(apolloApp)
+	err := c.Watch("application", mDeft, &mPtr)
 	t.Log(err)
 	t.Log(mDeft)
-	err = Watch("app-common", mComDeft, &mComPtr)
+	err = c.Watch("app-common", mComDeft, &mComPtr)
 	t.Log(err)
 	t.Log(mComDeft)
 	for i := 0; i < 10; i++ {
-		t.Log(DC().Ages)
-		t.Log(DCom().Wants)
+		t.Log(DC())
+		t.Log(DCom())
 		time.Sleep(1 * time.Second)
 	}
 }

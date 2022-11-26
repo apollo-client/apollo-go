@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 
 	"github.com/xnzone/apollo-go/transport"
 	"github.com/xnzone/apollo-go/util"
@@ -37,6 +38,20 @@ func (c *Client) getConfigs(namespace string, releaseKey string) (int, Apollo, e
 	header := transport.Headers(c.opts.Auth.Header(reqURL, app.AppId, app.Secret))
 	var body []byte
 	status, body, err := c.opts.Transport.Do(reqURL, header)
+	// new body must write to backup
+	if c.App.IsBackup && err == nil && status == http.StatusOK && body != nil {
+		filePath := path.Join(c.App.BackupPath, fmt.Sprintf("%s-%s-%s", c.App.AppId, c.App.Cluster, namespace))
+		_ = c.opts.Backup.Write(filePath, body)
+	}
+	// request failed, read from backup
+	if c.App.IsBackup && (err != nil || status != http.StatusOK) {
+		filePath := path.Join(c.App.BackupPath, fmt.Sprintf("%s-%s-%s", c.App.AppId, c.App.Cluster, namespace))
+		body, err = c.opts.Backup.Read(filePath)
+		// read success, set status ok
+		if err == nil && body != nil {
+			status = http.StatusOK
+		}
+	}
 	if err != nil {
 		return status, apol, err
 	}

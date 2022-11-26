@@ -1,8 +1,5 @@
-# apollo-go
-apollo config go
-
 ## 介绍
-基于携程apollo的go客户端
+基于[携程apollo](https://www.apolloconfig.com/)的go客户端
 
 ## 功能
 
@@ -13,6 +10,10 @@ apollo config go
 - [x] 支持多namespace 支持watch多个namespace
 - [x] 支持多格式 支持properties,yaml,json等格式
 - [x] 支持本地文件备份 当配置中心出现问题时，通过备份文件加载
+
+## TODO
+- [ ] 支持notification方式更新
+- [ ] 支持负载均衡
 
 ## 使用
 

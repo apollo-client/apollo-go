@@ -82,3 +82,59 @@ func TestWatch(t *testing.T) {
 		time.Sleep(1 * time.Second)
 	}
 }
+
+func TestWatchJson(t *testing.T) {
+	type Json struct {
+		Application string `json:"application"`
+		Name        string `json:"name"`
+		Age         int64  `json:"age"`
+	}
+	deft := &Json{
+		Name: "json",
+		Age:  132,
+	}
+	var ptr unsafe.Pointer
+
+	DC := func() *Json {
+		p := atomic.LoadPointer(&ptr)
+		if nil != p {
+			return (*Json)(p)
+		}
+		return deft
+	}
+
+	c, _ := NewClient(apolloApp, EnableBackup(true), BackupPath("./"))
+	err := c.Watch("app-json.json", deft, &ptr)
+	t.Log(err)
+	for i := 0; i < 10; i++ {
+		t.Log(DC())
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func TestWatchYaml(t *testing.T) {
+	type Yaml struct {
+		Application string `yaml:"application"`
+		Name        string `yaml:"name"`
+		Age         int64  `yaml:"age"`
+	}
+	var ptr unsafe.Pointer
+	deft := &Yaml{
+		Name: "yaml",
+	}
+	DC := func() *Yaml {
+		p := atomic.LoadPointer(&ptr)
+		if nil != p {
+			return (*Yaml)(p)
+		}
+		return deft
+	}
+	c, _ := NewClient(apolloApp, EnableBackup(true), BackupPath("./"))
+	err := c.Watch("app-yaml.yml", deft, &ptr)
+
+	t.Log(err)
+	for i := 0; i < 10; i++ {
+		t.Log(DC())
+		time.Sleep(1 * time.Second)
+	}
+}

@@ -7,10 +7,15 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
 	"unsafe"
+
+	"github.com/xnzone/apollo-go/codec"
+	"github.com/xnzone/apollo-go/codec/jsoncodec"
+	"github.com/xnzone/apollo-go/codec/properties"
+	"github.com/xnzone/apollo-go/codec/yamlcodec"
 )
 
 type Application struct {
@@ -40,7 +45,21 @@ func NewClient(c *Application, opt ...Option) (*Client, error) {
 
 // Watch watch namespace struct
 func (c *Client) Watch(namespace string, deft interface{}, ptr *unsafe.Pointer) error {
-	cb, err := namespaceCallback(deft, ptr)
+	var code codec.Codec
+	ext := namespace[strings.LastIndex(namespace, ".")+1:]
+	switch ext {
+	case "json":
+		code = jsoncodec.NewCodec()
+	case "yaml", "yml":
+		code = yamlcodec.NewCodec()
+	case "xml":
+		return errors.New("not support xml namespace")
+	case "txt":
+		return errors.New("not support txt namespace")
+	default:
+		code = properties.NewCodec()
+	}
+	cb, err := namespaceCallback(deft, ptr, code)
 	if err != nil {
 		return err
 	}
@@ -48,7 +67,7 @@ func (c *Client) Watch(namespace string, deft interface{}, ptr *unsafe.Pointer) 
 }
 
 // namespaceCallback namespace callback function
-func namespaceCallback(deft interface{}, ptr *unsafe.Pointer) (WatchCallback, error) {
+func namespaceCallback(deft interface{}, ptr *unsafe.Pointer, code codec.Codec) (WatchCallback, error) {
 	if reflect.Ptr != reflect.TypeOf(deft).Kind() {
 		return nil, errors.New("default must be a pointer")
 	}
@@ -70,60 +89,16 @@ func namespaceCallback(deft interface{}, ptr *unsafe.Pointer) (WatchCallback, er
 			return
 		}
 		// fill in default value
-		tmp := apol.Configurations
-		def := make(map[string]bool)
-		for k, v := range mdeft {
-			if _, ok := tmp[k]; !ok {
-				tmp[k] = v
-				def[k] = true
-			}
-		}
 
 		nd := reflect.New(dt.Type())
 		nt := reflect.TypeOf(deft).Elem()
-		nm := make(map[string]interface{})
-		// configurations are string, so use reflect, then marshal and unmarshal
-		for num := 0; num < nt.NumField(); num++ {
-			key := nt.Field(num).Tag.Get("json")
-			typ := nt.Field(num).Type.Kind()
-			// json.RawMessage to string
-			var str string
-			if _, ok := def[key]; ok {
-				str = string(tmp[key])
-			} else {
-				_ = json.Unmarshal(tmp[key], &str)
-			}
-			switch typ {
-			case reflect.Struct:
-				val := reflect.New(nt.Field(num).Type)
-				vpt := val.Interface()
-				_ = json.Unmarshal([]byte(str), &vpt)
-				nm[key] = val.Interface()
-			case reflect.Array, reflect.Slice:
-				var val []interface{}
-				_ = json.Unmarshal([]byte(str), &val)
-				nm[key] = val
-			case reflect.Map:
-				val := make(map[string]interface{})
-				_ = json.Unmarshal([]byte(str), &val)
-				nm[key] = val
-			case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int8, reflect.Int64,
-				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				val, _ := strconv.ParseInt(str, 10, 64)
-				nm[key] = val
-			case reflect.Float32, reflect.Float64:
-				val, _ := strconv.ParseFloat(str, 64)
-				nm[key] = val
-			case reflect.Bool:
-				val, _ := strconv.ParseBool(str)
-				nm[key] = val
-			default:
-				nm[key] = string(str)
-			}
+		nm, err := code.Parse(apol.Configurations, mdeft, nt)
+		if err != nil {
+			return err
 		}
 		// marshal and unmarshal
 		tbs, _ := json.Marshal(nm)
-		_ = json.Unmarshal(tbs, nd.Interface())
+		err = json.Unmarshal(tbs, nd.Interface())
 
 		// store new pointer
 		nptr := unsafe.Pointer(nd.Elem().UnsafeAddr())

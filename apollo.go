@@ -14,12 +14,10 @@ import (
 )
 
 type Application struct {
-	AppId      string `json:"appId"`
-	Cluster    string `json:"cluster"`
-	Secret     string `json:"secret"`
-	Addr       string `json:"addr"`
-	IsBackup   bool   `json:"is_backup"`
-	BackupPath string `json:"backup_path"`
+	AppId   string `json:"appId"`
+	Cluster string `json:"cluster"`
+	Secret  string `json:"secret"`
+	Addr    string `json:"addr"`
 }
 
 // Client apollo client

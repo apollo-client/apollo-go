@@ -35,12 +35,10 @@ type Person struct {
 
 var (
 	apolloApp = &Application{
-		Addr:       "http://81.68.181.139:8080",
-		AppId:      "apollo-go",
-		Secret:     "",
-		Cluster:    "DEV",
-		IsBackup:   true,
-		BackupPath: "./",
+		Addr:    "http://81.68.181.139:8080",
+		AppId:   "apollo-go",
+		Secret:  "",
+		Cluster: "DEV",
 	}
 	mPtr  unsafe.Pointer
 	mDeft = &TestConfig{
@@ -71,7 +69,7 @@ func DCom() *CommonConfig {
 
 func TestWatch(t *testing.T) {
 	trans := transport.NewHTTPTransport(transport.MaxRetries(1))
-	c, _ := NewClient(apolloApp, Transport(trans))
+	c, _ := NewClient(apolloApp, Transport(trans), EnableBackup(true), BackupPath("./"))
 	err := c.Watch("application", mDeft, &mPtr)
 	t.Log(err)
 	t.Log(mDeft)

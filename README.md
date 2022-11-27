@@ -21,6 +21,8 @@
 - Init 初始化apollo配置
 - Watch 监听`namespace`结构体
 
+具体使用可以参考[apollo-go-demo](https://github.com/xnzone/apollo-go-demo)
+
 看下面例子
 
 ```go
@@ -57,6 +59,7 @@ var (
 	}
 )
 
+// DC 返回动态配置，在需要的时候用这个函数获取配置结构体
 func DC() *TestConfig {
 	p := atomic.LoadPointer(&mPtr)
 	if nil != p {

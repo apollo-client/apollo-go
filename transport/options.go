@@ -92,3 +92,23 @@ func Trans(t *http.Transport) Option {
 func Hook(h HookRequest) Option {
 	return func(o *Options) { o.Hook = h }
 }
+
+type CallOptions struct {
+	Headers map[string]string // call header
+	Timeout time.Duration     // call timeout
+}
+
+func WithHeaders(m map[string]string) CallOption {
+	return func(o *CallOptions) {
+		if o.Headers == nil {
+			o.Headers = make(map[string]string)
+		}
+		for k, v := range m {
+			o.Headers[k] = v
+		}
+	}
+}
+
+func WithTimeout(t time.Duration) CallOption {
+	return func(o *CallOptions) { o.Timeout = t }
+}

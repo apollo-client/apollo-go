@@ -1,6 +1,8 @@
 package apollo
 
 import (
+	"fmt"
+	"runtime"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -76,7 +78,9 @@ func TestWatch(t *testing.T) {
 	err = c.Watch("app-common", mComDeft, &mComPtr)
 	t.Log(err)
 	t.Log(mComDeft)
-	for i := 0; i < 25; i++ {
+	fmt.Println("NumGoroutine:", runtime.NumGoroutine())
+	for i := 0; i < 26; i++ {
+		fmt.Println("NumGoroutine:", runtime.NumGoroutine())
 		t.Log(DC())
 		t.Log(DCom())
 		time.Sleep(3 * time.Second)
@@ -136,5 +140,12 @@ func TestWatchYaml(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		t.Log(DC())
 		time.Sleep(1 * time.Second)
+	}
+}
+
+func TestNil(t *testing.T) {
+	var m map[string]string
+	for k, v := range m {
+		fmt.Println(k, v)
 	}
 }

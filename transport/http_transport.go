@@ -34,14 +34,7 @@ func (h *HTTPTransport) Options() *Options {
 	return h.opts
 }
 
-func (h *HTTPTransport) Do(reqURL string, opt ...Option) (int, []byte, error) {
-	h.Init(opt...)
-	if h.opts.Timeout > 0 {
-		h.opts.Client.Timeout = h.opts.Timeout
-	}
-	if h.opts.Trans != nil {
-		h.opts.Client.Transport = h.opts.Trans
-	}
+func (h *HTTPTransport) Do(reqURL string, opt ...CallOption) (int, []byte, error) {
 	retry := 0
 
 	for {
@@ -49,7 +42,7 @@ func (h *HTTPTransport) Do(reqURL string, opt ...Option) (int, []byte, error) {
 		if retry > h.opts.MaxRetries {
 			break
 		}
-		status, body, err := doRequest(reqURL, h.opts)
+		status, body, err := h.doRequest(reqURL, opt...)
 		if err != nil {
 			time.Sleep(h.opts.RetryInterval)
 			log.Errorf("do err: %v\n", err)
@@ -68,24 +61,43 @@ func (h *HTTPTransport) Do(reqURL string, opt ...Option) (int, []byte, error) {
 	return 0, nil, err
 }
 
-func doRequest(rawURL string, opts *Options) (int, []byte, error) {
+func (h *HTTPTransport) doRequest(rawURL string, opts ...CallOption) (int, []byte, error) {
+	opt := &CallOptions{}
+	for _, o := range opts {
+		o(opt)
+	}
+	ts := h.opts.Timeout
+	if opt.Timeout > 0 {
+		ts = opt.Timeout
+	}
+	if ts > 0 {
+		h.opts.Client.Timeout = ts
+		defer func() { h.opts.Client.Timeout = 1 * time.Second }()
+	}
 	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
 	if err != nil {
 		log.Errorf("http request err: %v\n", err)
 		return 0, nil, err
 	}
-	if len(opts.Headers) > 0 {
-		for k, v := range opts.Headers {
+	// call header
+	if len(opt.Headers) > 0 {
+		for k, v := range opt.Headers {
 			req.Header.Set(k, v)
 		}
 	}
-	if opts.Hook != nil {
-		if err = opts.Hook(req); err != nil {
+	// client header
+	if len(h.opts.Headers) > 0 {
+		for k, v := range h.opts.Headers {
+			req.Header.Set(k, v)
+		}
+	}
+	if h.opts.Hook != nil {
+		if err = h.opts.Hook(req); err != nil {
 			log.Errorf("request hook err: %v\n", err)
 			return 0, nil, err
 		}
 	}
-	resp, err := opts.Client.Do(req)
+	resp, err := h.opts.Client.Do(req)
 	if err != nil {
 		log.Errorf("doRequest url: %s err: %v\n", rawURL, err)
 		return 0, nil, err

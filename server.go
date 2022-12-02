@@ -42,9 +42,9 @@ func (c *Client) getConfigs(namespace string, releaseKey string) (int, Apollo, e
 	var apol Apollo
 	app := c.App
 	reqURL := configsURL(app, namespace, releaseKey)
-	header := transport.Headers(c.opts.Auth.Header(reqURL, app.AppId, app.Secret))
+	header := c.opts.Auth.Header(reqURL, app.AppId, app.Secret)
 	var body []byte
-	status, body, err := c.opts.Transport.Do(reqURL, header)
+	status, body, err := c.opts.Transport.Do(reqURL, transport.WithHeaders(header))
 	if err != nil {
 		log.Errorf("get configs namespace: %s, release:%s, err: %v\n", namespace, releaseKey, err)
 	}
@@ -91,7 +91,7 @@ func (c *Client) getNotifications(ns []*Notifcation) (int, []*Notifcation, error
 	reqURL := notificationURL(app, ns)
 	header := c.opts.Auth.Header(reqURL, app.AppId, app.Secret)
 	var body []byte
-	status, body, err := c.opts.Transport.Do(reqURL, transport.Headers(header), transport.Timeout(10*time.Minute))
+	status, body, err := c.opts.Transport.Do(reqURL, transport.WithHeaders(header), transport.WithTimeout(10*time.Minute))
 	if err != nil {
 		log.Errorf("get notifications url: %s, err: %v\n", reqURL, err)
 		return status, nil, err

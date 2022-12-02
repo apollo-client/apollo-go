@@ -76,10 +76,10 @@ func TestWatch(t *testing.T) {
 	err = c.Watch("app-common", mComDeft, &mComPtr)
 	t.Log(err)
 	t.Log(mComDeft)
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 25; i++ {
 		t.Log(DC())
 		t.Log(DCom())
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 }
 

@@ -10,9 +10,9 @@
 - [x] 支持多namespace 支持watch多个namespace
 - [x] 支持多格式 支持properties,yaml,json等格式
 - [x] 支持本地文件备份 当配置中心出现问题时，通过备份文件加载
+- [x] 支持notification方式更新
 
 ## TODO
-- [ ] 支持notification方式更新
 - [ ] 支持负载均衡
 - [ ] 支持获取单个key
 

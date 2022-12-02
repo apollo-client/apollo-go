@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
 	"github.com/xnzone/apollo-go/transport"
 	"github.com/xnzone/apollo-go/util"
@@ -18,6 +19,11 @@ type Apollo struct {
 	ReleaseKey    string `json:"releaseKey"`
 
 	Configurations map[string]json.RawMessage `json:"configurations"`
+}
+
+type Notifcation struct {
+	NamespaceName string `json:"namespaceName"`
+	NotifcationID int64  `json:"notificationId"`
 }
 
 func configsURL(app *Application, namespace string, releaseKey string) string {
@@ -63,4 +69,35 @@ func (c *Client) getConfigs(namespace string, releaseKey string) (int, Apollo, e
 		return status, apol, err
 	}
 	return status, apol, nil
+}
+
+func notificationURL(app *Application, ns []*Notifcation) string {
+	bs, _ := json.Marshal(ns)
+	return fmt.Sprintf("%s/notifications/v2?appId=%s&cluster=%s&notifications=%s",
+		app.Addr,
+		url.QueryEscape(app.AppId),
+		url.QueryEscape(app.Cluster),
+		url.QueryEscape(string(bs)))
+}
+
+func (c *Client) getNotifications(ns []*Notifcation) (int, []*Notifcation, error) {
+	fmt.Printf("enter timer: %d\n", time.Now().Unix())
+	defer func() { fmt.Printf("leave timer: %d\n", time.Now().Unix()) }()
+	app := c.App
+	reqURL := notificationURL(app, ns)
+	header := c.opts.Auth.Header(reqURL, app.AppId, app.Secret)
+	var body []byte
+	status, body, err := c.opts.Transport.Do(reqURL, transport.Headers(header), transport.Timeout(10*time.Minute))
+	if err != nil {
+		return status, nil, err
+	}
+	if status != http.StatusOK {
+		return status, nil, err
+	}
+	res := make([]*Notifcation, 0)
+	err = json.Unmarshal(body, &res)
+	if err != nil {
+		return status, res, err
+	}
+	return status, res, nil
 }

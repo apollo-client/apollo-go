@@ -24,7 +24,7 @@ func newOptions(opts ...Option) *Options {
 		Auth:          auth.DefaultAuth,
 		Transport:     transport.DefaultTransport,
 		Backup:        backup.DefaultBackup,
-		WatchInterval: 30 * time.Second,
+		WatchInterval: 5 * time.Second,
 		EnableBackup:  false,
 		BackupPath:    "./",
 	}

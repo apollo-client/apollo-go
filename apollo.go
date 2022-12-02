@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"reflect"
 	"strings"
 	"sync/atomic"
@@ -37,10 +36,12 @@ func NewClient(c *Application, opt ...Option) (*Client, error) {
 		return nil, errors.New("config nil")
 	}
 	opts := newOptions(opt...)
-	return &Client{
+	cli := &Client{
 		App:  c,
 		opts: opts,
-	}, nil
+	}
+	cli.asyncNotifications()
+	return cli, nil
 }
 
 // Watch watch namespace struct
@@ -63,7 +64,7 @@ func (c *Client) Watch(namespace string, deft interface{}, ptr *unsafe.Pointer) 
 	if err != nil {
 		return err
 	}
-	return c.watchNamespace(namespace, cb)
+	return c.asyncApollo(namespace, cb)
 }
 
 // namespaceCallback namespace callback function
@@ -109,30 +110,6 @@ func namespaceCallback(deft interface{}, ptr *unsafe.Pointer, code codec.Codec) 
 
 // WatchCallback watch callback define
 type WatchCallback func(ctx context.Context, apol *Apollo) error
-
-// WatchNamespace watch namespace and callback
-func (c *Client) watchNamespace(namespace string, cb WatchCallback) error {
-	status, apol, err := c.getConfigs(namespace, "")
-	if err != nil || status != http.StatusOK {
-		return fmt.Errorf("watch namespace:%s, err:%v", namespace, err)
-	}
-	if err = safeCallback(&apol, cb); err != nil {
-		return fmt.Errorf("watch namespace:%s, err:%v", namespace, err)
-	}
-
-	go func() {
-		ticker := time.NewTicker(c.opts.WatchInterval)
-		for range ticker.C {
-			ns, na, ne := c.getConfigs(namespace, apol.ReleaseKey)
-			if ne != nil || ns != http.StatusOK {
-				continue
-			}
-			apol = na
-			_ = safeCallback(&apol, cb)
-		}
-	}()
-	return nil
-}
 
 // safeCallback recover if callback failed
 func safeCallback(apol *Apollo, cb WatchCallback) (err error) {

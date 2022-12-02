@@ -15,6 +15,7 @@ import (
 	"github.com/xnzone/apollo-go/codec/jsoncodec"
 	"github.com/xnzone/apollo-go/codec/properties"
 	"github.com/xnzone/apollo-go/codec/yamlcodec"
+	"github.com/xnzone/apollo-go/log"
 )
 
 type Application struct {
@@ -95,6 +96,7 @@ func namespaceCallback(deft interface{}, ptr *unsafe.Pointer, code codec.Codec) 
 		nt := reflect.TypeOf(deft).Elem()
 		nm, err := code.Parse(apol.Configurations, mdeft, nt)
 		if err != nil {
+			log.Errorf("parse config err: %v", err)
 			return err
 		}
 		// marshal and unmarshal

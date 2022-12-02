@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/xnzone/apollo-go/log"
 )
 
 type HTTPTransport struct {
@@ -50,6 +52,7 @@ func (h *HTTPTransport) Do(reqURL string, opt ...Option) (int, []byte, error) {
 		status, body, err := doRequest(reqURL, h.opts)
 		if err != nil {
 			time.Sleep(h.opts.RetryInterval)
+			log.Errorf("do err: %v\n", err)
 			continue
 		}
 		if status != http.StatusOK && status != http.StatusNotModified {
@@ -68,6 +71,7 @@ func (h *HTTPTransport) Do(reqURL string, opt ...Option) (int, []byte, error) {
 func doRequest(rawURL string, opts *Options) (int, []byte, error) {
 	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
 	if err != nil {
+		log.Errorf("http request err: %v\n", err)
 		return 0, nil, err
 	}
 	if len(opts.Headers) > 0 {
@@ -77,11 +81,13 @@ func doRequest(rawURL string, opts *Options) (int, []byte, error) {
 	}
 	if opts.Hook != nil {
 		if err = opts.Hook(req); err != nil {
+			log.Errorf("request hook err: %v\n", err)
 			return 0, nil, err
 		}
 	}
 	resp, err := opts.Client.Do(req)
 	if err != nil {
+		log.Errorf("doRequest url: %s err: %v\n", rawURL, err)
 		return 0, nil, err
 	}
 	if resp == nil {
@@ -92,6 +98,9 @@ func doRequest(rawURL string, opts *Options) (int, []byte, error) {
 	}
 	var body []byte
 	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("read request body err: %v\n", err)
+	}
 	if err == io.EOF {
 		err = nil
 	}

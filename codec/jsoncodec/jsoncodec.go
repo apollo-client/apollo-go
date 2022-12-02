@@ -5,15 +5,20 @@ import (
 	"reflect"
 
 	"github.com/xnzone/apollo-go/codec"
+	"github.com/xnzone/apollo-go/log"
 )
 
 type jsonCodec struct{}
 
 func (c *jsonCodec) Parse(configurations map[string]json.RawMessage, deft map[string]json.RawMessage, _ reflect.Type) (map[string]interface{}, error) {
 	var str string
-	_ = json.Unmarshal(configurations["content"], &str)
+	if err := json.Unmarshal(configurations["content"], &str); err != nil {
+		log.Errorf("json unmarshal err: %v\n", err)
+	}
 	res := make(map[string]interface{})
-	_ = json.Unmarshal([]byte(str), &res)
+	if err := json.Unmarshal([]byte(str), &res); err != nil {
+		log.Errorf("json unmarshal err: %v\n", err)
+	}
 
 	for k, v := range deft {
 		if _, ok := res[k]; !ok {

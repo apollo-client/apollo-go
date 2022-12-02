@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/xnzone/apollo-go/log"
 )
 
 var (
@@ -20,17 +22,18 @@ func (c *Client) asyncApollo(namespace string, cb WatchCallback) error {
 	// get apollo config first
 	status, apol, err := c.getConfigs(namespace, "")
 	if err != nil || status != http.StatusOK {
+		log.Errorf("watch namespace:%s, err:%v", namespace, err)
 		return fmt.Errorf("watch namespace:%s, err:%v", namespace, err)
 	}
 	// if success, callback function
 	if err = safeCallback(&apol, cb); err != nil {
+		log.Errorf("watch namespace:%s, err:%v", namespace, err)
 		return fmt.Errorf("watch namespace:%s, err:%v", namespace, err)
 	}
 
 	go func() {
 		// listen namespace channel
 		for nsp := range chstr {
-			fmt.Printf("namespace: %s\n", nsp)
 			if !strings.EqualFold(nsp, namespace) {
 				continue
 			}
@@ -38,7 +41,6 @@ func (c *Client) asyncApollo(namespace string, cb WatchCallback) error {
 			if ne != nil || ns != http.StatusOK {
 				continue
 			}
-			fmt.Printf("namespace: %s, na: %+v, err: %+v\n", nsp, na, err)
 			apol = na
 			_ = safeCallback(&apol, cb)
 		}
@@ -56,6 +58,7 @@ func (c *Client) asyncNotifications() {
 			mns.Range(func(key, value interface{}) bool {
 				n, ok := value.(*Notifcation)
 				if !ok {
+					log.Warnf("namespace notification err, namespace: %s", key)
 					return false
 				}
 				ns = append(ns, n)

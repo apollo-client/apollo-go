@@ -5,6 +5,7 @@ import (
 
 	"github.com/xnzone/apollo-go/auth"
 	"github.com/xnzone/apollo-go/backup"
+	"github.com/xnzone/apollo-go/log"
 	"github.com/xnzone/apollo-go/transport"
 )
 
@@ -62,4 +63,10 @@ func EnableBackup(enable bool) Option {
 // BackupPath backup path
 func BackupPath(p string) Option {
 	return func(o *Options) { o.BackupPath = p }
+}
+
+func Logger(l log.Logger) Option {
+	return func(o *Options) {
+		log.Init(l)
+	}
 }

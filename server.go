@@ -8,6 +8,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/xnzone/apollo-go/log"
 	"github.com/xnzone/apollo-go/transport"
 	"github.com/xnzone/apollo-go/util"
 )
@@ -44,6 +45,9 @@ func (c *Client) getConfigs(namespace string, releaseKey string) (int, Apollo, e
 	header := transport.Headers(c.opts.Auth.Header(reqURL, app.AppId, app.Secret))
 	var body []byte
 	status, body, err := c.opts.Transport.Do(reqURL, header)
+	if err != nil {
+		log.Errorf("get configs namespace: %s, release:%s, err: %v\n", namespace, releaseKey, err)
+	}
 	// new body must write to backup
 	if c.opts.EnableBackup && err == nil && status == http.StatusOK && body != nil {
 		filePath := path.Join(c.opts.BackupPath, fmt.Sprintf("%s-%s-%s", c.App.AppId, c.App.Cluster, namespace))
@@ -59,6 +63,7 @@ func (c *Client) getConfigs(namespace string, releaseKey string) (int, Apollo, e
 		}
 	}
 	if err != nil {
+		log.Errorf("get configs namespace: %s, release:%s, err: %v\n", namespace, releaseKey, err)
 		return status, apol, err
 	}
 	if status != http.StatusOK {
@@ -66,6 +71,7 @@ func (c *Client) getConfigs(namespace string, releaseKey string) (int, Apollo, e
 	}
 	err = json.Unmarshal(body, &apol)
 	if err != nil {
+		log.Errorf("get configs namespace: %s, release:%s, err: %v\n", namespace, releaseKey, err)
 		return status, apol, err
 	}
 	return status, apol, nil
@@ -81,14 +87,13 @@ func notificationURL(app *Application, ns []*Notifcation) string {
 }
 
 func (c *Client) getNotifications(ns []*Notifcation) (int, []*Notifcation, error) {
-	fmt.Printf("enter timer: %d\n", time.Now().Unix())
-	defer func() { fmt.Printf("leave timer: %d\n", time.Now().Unix()) }()
 	app := c.App
 	reqURL := notificationURL(app, ns)
 	header := c.opts.Auth.Header(reqURL, app.AppId, app.Secret)
 	var body []byte
 	status, body, err := c.opts.Transport.Do(reqURL, transport.Headers(header), transport.Timeout(10*time.Minute))
 	if err != nil {
+		log.Errorf("get notifications url: %s, err: %v\n", reqURL, err)
 		return status, nil, err
 	}
 	if status != http.StatusOK {
@@ -97,6 +102,7 @@ func (c *Client) getNotifications(ns []*Notifcation) (int, []*Notifcation, error
 	res := make([]*Notifcation, 0)
 	err = json.Unmarshal(body, &res)
 	if err != nil {
+		log.Errorf("get notifications url: %s, err: %v\n", reqURL, err)
 		return status, res, err
 	}
 	return status, res, nil

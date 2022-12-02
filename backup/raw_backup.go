@@ -3,6 +3,8 @@ package backup
 import (
 	"io/ioutil"
 	"os"
+
+	"github.com/xnzone/apollo-go/log"
 )
 
 type RawBackup struct {
@@ -11,9 +13,13 @@ type RawBackup struct {
 func (r *RawBackup) Write(filePath string, content []byte) error {
 	fd, err := os.Create(filePath)
 	if err != nil {
+		log.Errorf("write backup err: %v\n", err)
 		return err
 	}
 	_, err = fd.Write(content)
+	if err != nil {
+		log.Errorf("write backup err: %v\n", err)
+	}
 	return err
 }
 

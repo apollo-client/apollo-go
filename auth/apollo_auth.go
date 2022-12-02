@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/xnzone/apollo-go/log"
 )
 
 type ApolloAuth struct{}
@@ -39,6 +41,7 @@ func sign(str string, secret string) string {
 func parse(rawURL string) string {
 	u, err := url.Parse(rawURL)
 	if err != nil {
+		log.Errorf("parse url: %s, err: %v\n", rawURL, err)
 		return ""
 	}
 	query := u.Path

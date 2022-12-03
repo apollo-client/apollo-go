@@ -72,7 +72,9 @@ func (h *HTTPTransport) doRequest(rawURL string, opts ...CallOption) (int, []byt
 	}
 	if ts > 0 {
 		h.opts.Client.Timeout = ts
-		defer func() { h.opts.Client.Timeout = 1 * time.Second }()
+	}
+	if h.opts.Trans != nil {
+		h.opts.Client.Transport = h.opts.Trans
 	}
 	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
 	if err != nil {

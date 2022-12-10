@@ -38,7 +38,6 @@ func (c *Client) asyncApollo(namespace string, cb WatchCallback) error {
 				continue
 			}
 			ns, na, ne := c.getConfigs(namespace, apol.ReleaseKey)
-			fmt.Printf("configs namespace: %s, config:%v\n", nsp, na)
 			if ne != nil || ns != http.StatusOK {
 				continue
 			}

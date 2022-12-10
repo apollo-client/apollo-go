@@ -39,7 +39,7 @@ var (
 	apolloApp = &Application{
 		Addr:    "http://81.68.181.139:8080",
 		AppId:   "apollo-go",
-		Secret:  "",
+		Secret:  "40edd9317add4489a2eaa104054b01e6",
 		Cluster: "DEV",
 	}
 	mPtr  unsafe.Pointer
@@ -79,7 +79,7 @@ func TestWatch(t *testing.T) {
 	t.Log(err)
 	t.Log(mComDeft)
 	fmt.Println("NumGoroutine:", runtime.NumGoroutine())
-	for i := 0; i < 26; i++ {
+	for i := 0; i < 10; i++ {
 		fmt.Println("NumGoroutine:", runtime.NumGoroutine())
 		t.Log(DC())
 		t.Log(DCom())

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xnzone/apollo-go/log"
+	"github.com/apollo-client/apollo-go/log"
 )
 
 var (

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/xnzone/apollo-go/codec"
-	"github.com/xnzone/apollo-go/log"
+	"github.com/apollo-client/apollo-go/codec"
+	"github.com/apollo-client/apollo-go/log"
 	"gopkg.in/yaml.v2"
 )
 

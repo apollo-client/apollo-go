@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/xnzone/apollo-go/codec"
+	"github.com/apollo-client/apollo-go/codec"
 )
 
 type propertiesCodec struct{}

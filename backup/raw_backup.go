@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/xnzone/apollo-go/log"
+	"github.com/apollo-client/apollo-go/log"
 )
 
 type RawBackup struct {

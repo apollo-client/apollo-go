@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xnzone/apollo-go/log"
+	"github.com/apollo-client/apollo-go/log"
 )
 
 type HTTPTransport struct {

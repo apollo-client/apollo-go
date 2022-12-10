@@ -8,7 +8,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/xnzone/apollo-go/transport"
+	"github.com/apollo-client/apollo-go/transport"
 )
 
 type TestConfig struct {

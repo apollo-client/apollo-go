@@ -3,10 +3,10 @@ package apollo
 import (
 	"time"
 
-	"github.com/xnzone/apollo-go/auth"
-	"github.com/xnzone/apollo-go/backup"
-	"github.com/xnzone/apollo-go/log"
-	"github.com/xnzone/apollo-go/transport"
+	"github.com/apollo-client/apollo-go/auth"
+	"github.com/apollo-client/apollo-go/backup"
+	"github.com/apollo-client/apollo-go/log"
+	"github.com/apollo-client/apollo-go/transport"
 )
 
 type Option func(o *Options)

@@ -1,4 +1,4 @@
-module github.com/xnzone/apollo-go
+module github.com/apollo-client/apollo-go
 
 go 1.16
 

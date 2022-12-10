@@ -8,9 +8,9 @@ import (
 	"path"
 	"time"
 
-	"github.com/xnzone/apollo-go/log"
-	"github.com/xnzone/apollo-go/transport"
-	"github.com/xnzone/apollo-go/util"
+	"github.com/apollo-client/apollo-go/log"
+	"github.com/apollo-client/apollo-go/transport"
+	"github.com/apollo-client/apollo-go/util"
 )
 
 type Apollo struct {

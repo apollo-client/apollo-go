@@ -22,7 +22,7 @@
 - Init 初始化apollo配置
 - Watch 监听`namespace`结构体
 
-具体使用可以参考[apollo-go-demo](https://github.com/xnzone/apollo-go-demo)
+具体使用可以参考[apollo-go-demo](https://github.com/apollo-client/apollo-go-demo)
 
 看下面例子
 

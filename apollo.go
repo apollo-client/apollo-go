@@ -11,11 +11,11 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/xnzone/apollo-go/codec"
-	"github.com/xnzone/apollo-go/codec/jsoncodec"
-	"github.com/xnzone/apollo-go/codec/properties"
-	"github.com/xnzone/apollo-go/codec/yamlcodec"
-	"github.com/xnzone/apollo-go/log"
+	"github.com/apollo-client/apollo-go/codec"
+	"github.com/apollo-client/apollo-go/codec/jsoncodec"
+	"github.com/apollo-client/apollo-go/codec/properties"
+	"github.com/apollo-client/apollo-go/codec/yamlcodec"
+	"github.com/apollo-client/apollo-go/log"
 )
 
 type Application struct {
